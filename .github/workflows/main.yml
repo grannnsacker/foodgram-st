@@ -34,10 +34,3 @@ jobs:
         context: ./frontend
         push: true
         tags: ${{ secrets.DOC_NAME }}/foodgram_frontend:latest
-
-    - name: Build and push nginx
-      uses: docker/build-push-action@v4
-      with:
-        context: ./infra/nginx
-        push: true
-        tags: ${{ secrets.DOC_NAME }}/foodgram_nginx:latest
