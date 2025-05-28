@@ -1,0 +1,34 @@
+from django.contrib.auth import get_user_model
+from django.db import models
+from grannsacker_foodgram.models import Recipe
+
+
+User = get_user_model()
+
+class Cart(models.Model):
+    """Model for user's cart."""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='cart',
+        verbose_name='Пользователь'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='cart_by',
+        verbose_name='Рецепт'
+    )
+
+    class Meta:
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Список покупок'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_favorite'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} добавил {self.recipe.name} в список покупок'
