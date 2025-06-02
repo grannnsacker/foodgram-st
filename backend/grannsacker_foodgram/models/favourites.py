@@ -5,19 +5,19 @@ from grannsacker_foodgram.models import Recipe
 
 User = get_user_model()
 
+
 class Favorite(models.Model):
-    """Model for user's favorite recipes."""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='favorites',
-        verbose_name='Пользователь'
+        verbose_name='Пользователь',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         related_name='favorited_by',
-        verbose_name='Рецепт'
+        verbose_name='Рецепт',
     )
 
     class Meta:
@@ -25,8 +25,7 @@ class Favorite(models.Model):
         verbose_name_plural = 'Избранное'
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'recipe'],
-                name='unique_favorite_recipe'
+                fields=['user', 'recipe'], name='unique_favorite_recipe'
             )
         ]
 

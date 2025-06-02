@@ -4,7 +4,7 @@
 
 1. Клонируйте репозиторий:
 ```bash
-git clone <url-репозитория>
+git clone https://github.com/grannnsacker/foodgram-st.git
 ```
 
 2. Соберите статические файлы:
@@ -12,7 +12,7 @@ git clone <url-репозитория>
 docker-compose exec backend python manage.py collectstatic
 ```
 
-3. Запустите проект из infra/:
+3. Запустите проект:
 ```bash
 docker-compose up --build
 ```
@@ -24,7 +24,7 @@ docker-compose exec backend python manage.py migrate
 
 5. Загрузите ингредиенты в базу данных:
 ```bash
-docker-compose exec backend python manage.py load_ingredients <путь-до-файла-с-ингредиентами.json>
+docker-compose exec backend python manage.py load_ingredients /app/data/ingredients.json
 ```
 
 ## Создание суперпользователя

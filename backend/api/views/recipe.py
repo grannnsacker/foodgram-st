@@ -1,7 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
@@ -9,14 +8,16 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import PermissionDenied
 
 from grannsacker_foodgram.models import Recipe, Favorite, Cart
-from grannsacker_foodgram.serializers import (
+
+from api.serializers import (
     RecipeSerializer,
     RecipeCreateSerializer,
     FavoriteSerializer,
     CartSerializer,
-    RecipeLinkSerializer, ShortRecipeSerializer,
+    RecipeLinkSerializer,
+    ShortRecipeSerializer,
 )
-from ..filters import RecipeFilter
+from api.filters import RecipeFilter
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -26,7 +27,6 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """ViewSet for recipes."""
     queryset = Recipe.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = StandardResultsSetPagination
@@ -53,23 +53,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
             raise PermissionDenied('Вы не можете удалять чужие рецепты')
         return super().destroy(request, *args, **kwargs)
 
-
-    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
+    @action(
+        detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated]
+    )
     def favorite(self, request, pk=None):
-        """Add or remove recipe from favorites."""
         recipe = self.get_object()
         user = request.user
 
         if request.method == 'POST':
             serializer = FavoriteSerializer(
                 data={'user': user.id, 'recipe': recipe.id},
-                context={'request': request}
+                context={'request': request},
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(
                 ShortRecipeSerializer(recipe, context={'request': request}).data,
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED,
             )
 
         is_delete, _ = Favorite.objects.filter(user=user, recipe=recipe).delete()
@@ -80,20 +80,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
-        """Add or remove recipe from cart."""
         recipe = self.get_object()
         user = request.user
 
         if request.method == 'POST':
             serializer = CartSerializer(
                 data={'user': user.id, 'recipe': recipe.id},
-                context={'request': request}
+                context={'request': request},
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(
                 ShortRecipeSerializer(recipe, context={'request': request}).data,
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED,
             )
 
         is_delete, _ = Cart.objects.filter(user=user, recipe=recipe).delete()
@@ -103,23 +102,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        """Download shopping cart as text file."""
         user = request.user
         recipes = Recipe.objects.filter(cart_by__user=user)
 
         ingredients = {}
         for recipe in recipes:
             for ingredient in recipe.ingredients.all():
-                amount = recipe.recipe_ingredients.get(
-                    ingredient=ingredient
-                ).amount
+                amount = recipe.recipe_ingredients.get(ingredient=ingredient).amount
                 if ingredient.id in ingredients:
                     ingredients[ingredient.id]['amount'] += amount
                 else:
                     ingredients[ingredient.id] = {
                         'name': ingredient.name,
                         'measurement_unit': ingredient.measurement_unit,
-                        'amount': amount
+                        'amount': amount,
                     }
 
         shopping_list = ['Список покупок:\n']
@@ -138,11 +134,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='get-link')
     def get_link(self, request, pk=None):
-        """Get recipe link."""
         recipe = get_object_or_404(Recipe, pk=pk)
-        serializer = RecipeLinkSerializer({
-            'short-link': request.build_absolute_uri(f'/recipes/{recipe.id}/')
-        })
+        serializer = RecipeLinkSerializer(
+            {'short-link': request.build_absolute_uri(f'/recipes/{recipe.id}/')}
+        )
         return Response(serializer.data)
-
-
