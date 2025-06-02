@@ -77,7 +77,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-
     @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
