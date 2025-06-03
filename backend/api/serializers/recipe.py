@@ -5,8 +5,6 @@ from api.text import (
     ERROR_IMG_CANT_BE_EMPTY,
     ERROR_ADD_AT_LEAST_ONE,
     ERROR_INGR_MUST_BE_UNIQ,
-    ERROR_REC_ALREADY_IS_IN_CART,
-    ERROR_REC_ALREADY_IS_IN_FAV,
 )
 from api.utils import format_doesnt_exist_ingr
 from grannsacker_foodgram.models import (
@@ -144,32 +142,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 for item in ingredients_data
             ]
         )
-
-
-class FavoriteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Favorite
-        fields = ('user', 'recipe')
-
-    def validate(self, data):
-        user = data['user']
-        recipe = data['recipe']
-        if Favorite.objects.filter(user=user, recipe=recipe).exists():
-            raise serializers.ValidationError(ERROR_REC_ALREADY_IS_IN_FAV)
-        return data
-
-
-class CartSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Cart
-        fields = ('user', 'recipe')
-
-    def validate(self, data):
-        user = data['user']
-        recipe = data['recipe']
-        if Cart.objects.filter(user=user, recipe=recipe).exists():
-            raise serializers.ValidationError(ERROR_REC_ALREADY_IS_IN_CART)
-        return data
 
 
 class RecipeLinkSerializer(serializers.Serializer):

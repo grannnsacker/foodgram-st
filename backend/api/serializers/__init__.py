@@ -9,20 +9,17 @@ from .user import (
 from .recipe import (
     RecipeSerializer,
     RecipeCreateSerializer,
-    FavoriteSerializer,
-    CartSerializer,
     RecipeLinkSerializer,
     ShortRecipeSerializer,
 )
 
-from .subscriptions import (
-    SubscriptionsSerializer,
-)
+from .subscriptions import SubscriptionsSerializer
 
-from .ingredient import (
-    IngredientSerializer,
-)
+from .favorite import FavoriteSerializer
 
+from .ingredient import IngredientSerializer
+
+from .cart import CartSerializer
 
 __all__ = [
     "UserSerializer",
