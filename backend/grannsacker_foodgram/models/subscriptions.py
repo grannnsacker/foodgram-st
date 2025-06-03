@@ -11,22 +11,29 @@ class Subscription(models.Model):
         on_delete=models.CASCADE,
         related_name='follower',
         verbose_name='Подписчик',
+        help_text='Пользователь, который подписывается на автора',
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='following',
         verbose_name='Автор рецепта',
+        help_text='Пользователь, на которого подписываются',
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата подписки',
+        help_text='Дата подписки',
     )
 
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+        ordering = ['-created_at']
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'author'], name='unique_subscription'
             )
         ]
 
-    def __str__(self):
-        return f'{self.user.username} подписан на {self.author.username}'

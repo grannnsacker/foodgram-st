@@ -1,11 +1,12 @@
 from django.contrib.auth import get_user_model
-from djoser.views import UserViewSet
+from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
+from api.decorators import is_authenticated_only
 from api.text import ERROR_ALREADY_SUBS, ERROR_CANT_SUBS_ITSELF, ERROR_DONT_SUBS
 from grannsacker_foodgram.models import Subscription
 from api.serializers import (
@@ -25,15 +26,15 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class UserViewSet(UserViewSet):
+class UserViewSet(DjoserUserViewSet):
     queryset = User.objects.all()
     pagination_class = StandardResultsSetPagination
 
     def get_permissions(self):
         if self.action in [
             'me',
-            'set_password',
             'avatar',
+            'set_password',
             'delete_avatar',
             'subscriptions',
             'subscribe',
@@ -43,19 +44,16 @@ class UserViewSet(UserViewSet):
         return [AllowAny()]
 
     def get_serializer_class(self):
-        if self.action == 'create':
-            return UserCreateSerializer
-        if self.action == 'set_password':
-            return UpdatePasswordSerializer
-        if self.action == 'avatar':
-            return ChangeAvatarSerializer
-        if self.action == 'subscriptions':
-            return SubscriptionsSerializer
-        return UserSerializer
+        serializers = {
+            'create': UserCreateSerializer,
+            'set_password': UpdatePasswordSerializer,
+            'avatar': ChangeAvatarSerializer,
+            'subscriptions': SubscriptionsSerializer,
+        }
+        return serializers.get(self.action, UserSerializer)
 
-    @action(
-        detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated]
-    )
+    @action(detail=True, methods=['post', 'delete'])
+    @is_authenticated_only
     def subscribe(self, request, id=None):
         user = request.user
         author = self.get_object()
@@ -94,9 +92,8 @@ class UserViewSet(UserViewSet):
     @action(
         detail=False,
         methods=['get'],
-        permission_classes=[IsAuthenticated],
-        url_path='subscriptions',
     )
+    @is_authenticated_only
     def subscriptions(self, request):
         user = request.user
         subscriptions = User.objects.filter(following__user=user).order_by('id')
@@ -116,9 +113,9 @@ class UserViewSet(UserViewSet):
     @action(
         detail=False,
         methods=['put', 'delete'],
-        permission_classes=[IsAuthenticated],
         url_path='me/avatar',
     )
+    @is_authenticated_only
     def avatar(self, request, id=None):
         if request.method == 'PUT':
             serializer = self.get_serializer(

@@ -1,3 +1,5 @@
+from .base_recipe import BaseUserRecipeRelationSerializer
+
 from .user import (
     UserSerializer,
     UserCreateSerializer,
@@ -21,18 +23,20 @@ from .ingredient import IngredientSerializer
 
 from .cart import CartSerializer
 
+
 __all__ = [
-    "UserSerializer",
-    "UserCreateSerializer",
-    "FollowSerializer",
-    "SubscriptionsSerializer",
-    "IngredientSerializer",
-    "RecipeSerializer",
-    "RecipeCreateSerializer",
-    "FavoriteSerializer",
-    "CartSerializer",
-    "UpdatePasswordSerializer",
-    "ChangeAvatarSerializer",
-    "RecipeLinkSerializer",
-    "ShortRecipeSerializer",
+    'UserSerializer',
+    'UserCreateSerializer',
+    'FollowSerializer',
+    'SubscriptionsSerializer',
+    'IngredientSerializer',
+    'RecipeSerializer',
+    'RecipeCreateSerializer',
+    'BaseUserRecipeRelationSerializer',
+    'FavoriteSerializer',
+    'CartSerializer',
+    'UpdatePasswordSerializer',
+    'ChangeAvatarSerializer',
+    'RecipeLinkSerializer',
+    'ShortRecipeSerializer',
 ]

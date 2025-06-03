@@ -9,11 +9,24 @@ from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerialize
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 
 from api.text import ERROR_BAD_PASSW
+from grannsacker_foodgram.consts import MAX_CHAR_LEN
 
 User = get_user_model()
 
 
 class UserCreateSerializer(DjoserUserCreateSerializer):
+    # username = serializers.CharField(
+    #     required=True,
+    #     max_length=MAX_CHAR_LEN,
+    # )
+    # first_name = serializers.CharField(
+    #     required=True,
+    #     max_length=MAX_CHAR_LEN,
+    # )
+    # last_name = serializers.CharField(
+    #     required=True,
+    #     max_length=MAX_CHAR_LEN,
+    # )
     email = serializers.EmailField(
         required=True, validators=[UniqueValidator(queryset=User.objects.all())]
     )

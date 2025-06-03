@@ -33,22 +33,26 @@ class SubscriptionsSerializer(serializers.ModelSerializer):
             'avatar',
         )
 
-    def get_is_subscribed(self, obj):
-        return True
 
-    def get_recipes(self, obj):
-        request = self.context['request']
-        recipes = Recipe.objects.filter(author=obj)
+    def get_recipes(self, user):
+        request  = self.context.get('request')
+        recipes = Recipe.objects.filter(author=user)
+
         recipes_limit = request.query_params.get('recipes_limit')
-
-        if recipes_limit:
+        if recipes_limit is not None:
             try:
-                recipes_limit = int(recipes_limit)
-                recipes = recipes[:recipes_limit]
-            except (TypeError, ValueError):
+                recipes = recipes[:int(recipes_limit)]
+            except ValueError:
                 pass
 
-        return ShortRecipeSerializer(recipes, many=True).data
+        serializer = ShortRecipeSerializer(recipes, many=True, context=self.context)
+        return serializer.data
 
-    def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author=obj).count()
+    def get_recipes_count(self, user):
+        return Recipe.objects.filter(author=user).count()
+
+    def get_is_subscribed(self, user):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return request.user.follower.filter(author=user).exists()
+        return False

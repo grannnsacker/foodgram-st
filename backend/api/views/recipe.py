@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import PermissionDenied
 
+from api.decorators import is_authenticated_only
 from api.text import PERMISSION_DENIED_EDIT_RECIPE, PERMISSION_DENIED_DELETE_RECIPE
 from api.utils import format_recipe_item
 from grannsacker_foodgram.models import Recipe, Favorite, Cart
@@ -55,7 +56,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             raise PermissionDenied(PERMISSION_DENIED_DELETE_RECIPE)
         return super().destroy(request, *args, **kwargs)
 
-    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post', 'delete'])
+    @is_authenticated_only
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
@@ -77,7 +79,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post', 'delete'])
+    @is_authenticated_only
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
@@ -99,7 +102,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'])
+    @is_authenticated_only
     def download_shopping_cart(self, request):
         user = request.user
         recipes = Recipe.objects.filter(cart_by__user=user)

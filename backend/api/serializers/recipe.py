@@ -4,7 +4,7 @@ from drf_extra_fields.fields import Base64ImageField
 from api.text import (
     ERROR_IMG_CANT_BE_EMPTY,
     ERROR_ADD_AT_LEAST_ONE,
-    ERROR_INGR_MUST_BE_UNIQ,
+    ERROR_INGR_MUST_BE_UNIQ, ERROR_FAKE_INGR,
 )
 from api.utils import format_doesnt_exist_ingr
 from grannsacker_foodgram.models import (
@@ -88,61 +88,75 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('ingredients', 'image', 'name', 'text', 'cooking_time')
+        fields = (
+            'ingredients',
+            'image',
+            'name',
+            'text',
+            'cooking_time',
+        )
 
     def validate(self, data):
-        if not data['image']:
+        if not data.get('image'):
             raise serializers.ValidationError(
                 {'image': ERROR_IMG_CANT_BE_EMPTY}
             )
 
-        ingredients = data.get('ingredients', [])
-        if not ingredients:
+        ingredients = data.get('ingredients')
+        if not ingredients or len(ingredients) == 0:
             raise serializers.ValidationError(ERROR_ADD_AT_LEAST_ONE)
 
-        ingredient_ids = [item['id'] for item in ingredients]
-        if len(ingredient_ids) != len(set(ingredient_ids)):
+
+        ids = [item['id'] for item in ingredients]
+        if len(set(ids)) < len(ids):
             raise serializers.ValidationError(ERROR_INGR_MUST_BE_UNIQ)
 
-        existing_ingredients = Ingredient.objects.filter(id__in=ingredient_ids)
-        if len(existing_ingredients) != len(ingredient_ids):
-            found_ids = set(existing_ingredients.values_list('id', flat=True))
-            missing_ids = set(ingredient_ids) - found_ids
-            raise serializers.ValidationError(format_doesnt_exist_ingr(missing_ids))
+        found_ids = set(Ingredient.objects.filter(id__in=ids).values_list('id', flat=True))
+        if set(ids) - found_ids:
+            raise serializers.ValidationError(
+                {'ingredients': ERROR_FAKE_INGR}
+            )
 
         return data
 
     def create(self, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(**validated_data)
-        self._create_recipe_ingredients(recipe, ingredients_data)
-        return recipe
+        ingredients = validated_data.pop('ingredients')
+        new_recipe = Recipe.objects.create(**validated_data)
+        associations = [
+            RecipeIngredient(
+                recipe=new_recipe,
+                ingredient_id=ingredient['id'],
+                amount=ingredient['amount']
+            )
+            for ingredient in ingredients
+        ]
+        RecipeIngredient.objects.bulk_create(associations)
+
+        return new_recipe
 
     def update(self, instance, validated_data):
-        if 'ingredients' in validated_data:
-            ingredients_data = validated_data.pop('ingredients')
-            instance.ingredients.clear()
-            self._create_recipe_ingredients(instance, ingredients_data)
-
+        ingredients = validated_data.pop('ingredients', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
         instance.save()
+
+        if ingredients is not None:
+            instance.ingredients.clear()
+            links = [
+                RecipeIngredient(
+                    recipe=instance,
+                    ingredient_id=ing['id'],
+                    amount=ing['amount']
+                )
+                for ing in ingredients
+            ]
+            RecipeIngredient.objects.bulk_create(links)
+
         return instance
 
     def to_representation(self, instance):
         return RecipeSerializer(instance, context=self.context).data
-
-    def _create_recipe_ingredients(self, recipe, ingredients_data):
-        RecipeIngredient.objects.bulk_create(
-            [
-                RecipeIngredient(
-                    recipe=recipe, ingredient_id=item['id'], amount=item['amount']
-                )
-                for item in ingredients_data
-            ]
-        )
-
 
 class RecipeLinkSerializer(serializers.Serializer):
     link = serializers.CharField(read_only=True)
