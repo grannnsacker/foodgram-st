@@ -22,24 +22,24 @@ class SubscriptionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            "id",
-            "email",
-            "username",
-            "first_name",
-            "last_name",
-            "is_subscribed",
-            "recipes",
-            "recipes_count",
-            "avatar",
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count',
+            'avatar',
         )
 
     def get_is_subscribed(self, obj):
         return True
 
     def get_recipes(self, obj):
-        request = self.context["request"]
+        request = self.context['request']
         recipes = Recipe.objects.filter(author=obj)
-        recipes_limit = request.query_params.get("recipes_limit")
+        recipes_limit = request.query_params.get('recipes_limit')
 
         if recipes_limit:
             try:

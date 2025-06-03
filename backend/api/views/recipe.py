@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import PermissionDenied
 
+from api.text import PERMISSION_DENIED_EDIT_RECIPE, PERMISSION_DENIED_DELETE_RECIPE
+from api.utils import format_recipe_item
 from grannsacker_foodgram.models import Recipe, Favorite, Cart
 
 from api.serializers import (
@@ -44,18 +46,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         recipe = self.get_object()
         if recipe.author != request.user:
-            raise PermissionDenied('Вы не можете изменять чужие рецепты')
+            raise PermissionDenied(PERMISSION_DENIED_EDIT_RECIPE)
         return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         recipe = self.get_object()
         if recipe.author != request.user:
-            raise PermissionDenied('Вы не можете удалять чужие рецепты')
+            raise PermissionDenied(PERMISSION_DENIED_DELETE_RECIPE)
         return super().destroy(request, *args, **kwargs)
 
-    @action(
-        detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated]
-    )
+    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
@@ -119,10 +119,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         shopping_list = ['Список покупок:\n']
         for ingredient in ingredients.values():
-            shopping_list.append(
-                f"• {ingredient['name']} ({ingredient['measurement_unit']}) - "
-                f"{ingredient['amount']}"
-            )
+            name = ingredient['name']
+            unit = ingredient['measurement_unit']
+            amount = ingredient['amount']
+            shopping_list.append(format_recipe_item(name, unit, amount))
         return Response(
             '\n'.join(shopping_list),
             content_type='text/plain',

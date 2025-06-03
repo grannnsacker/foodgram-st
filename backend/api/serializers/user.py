@@ -8,6 +8,7 @@ from rest_framework.validators import UniqueValidator
 from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 
+from api.text import ERROR_BAD_PASSW
 
 User = get_user_model()
 
@@ -22,7 +23,7 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
 
     class Meta:
         model = User
-        fields = ("email", "id", "username", "first_name", "last_name", "password")
+        fields = ('email', 'id', 'username', 'first_name', 'last_name', 'password')
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
@@ -36,17 +37,17 @@ class UserSerializer(DjoserUserSerializer):
     class Meta:
         model = User
         fields = (
-            "id",
-            "email",
-            "username",
-            "first_name",
-            "last_name",
-            "is_subscribed",
-            "avatar",
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'avatar',
         )
 
     def get_is_subscribed(self, obj):
-        request = self.context.get("request")
+        request = self.context.get('request')
         if request and request.user.is_authenticated:
             return obj.following.filter(user=request.user).exists()
         return False
@@ -57,11 +58,11 @@ class UpdatePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField()
 
     def validate(self, validated_data):
-        user = self.context["request"].user
-        passw = validated_data["current_password"]
+        user = self.context['request'].user
+        passw = validated_data['current_password']
 
         if not user.check_password(passw):
-            raise serializers.ValidationError({"current_password": "Неверный пароль"})
+            raise serializers.ValidationError({'current_password': ERROR_BAD_PASSW})
         return validated_data
 
 
@@ -70,20 +71,20 @@ class FollowSerializer(UserSerializer):
     recipes_count = serializers.SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ("recipes", "recipes_count")
+        fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count')
 
     def get_recipes(self, obj):
-        request = self.context.get("request")
+        request = self.context.get('request')
         recipes = obj.recipes.all()
-        recipes_limit = request.query_params.get("recipes_limit")
+        recipes_limit = request.query_params.get('recipes_limit')
         if recipes_limit:
             recipes = recipes[: int(recipes_limit)]
         return [
             {
-                "id": recipe.id,
-                "name": recipe.name,
-                "image": recipe.image.url,
-                "cooking_time": recipe.cooking_time,
+                'id': recipe.id,
+                'name': recipe.name,
+                'image': recipe.image.url,
+                'cooking_time': recipe.cooking_time,
             }
             for recipe in recipes
         ]
@@ -97,4 +98,4 @@ class ChangeAvatarSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("avatar",)
+        fields = ('avatar',)
